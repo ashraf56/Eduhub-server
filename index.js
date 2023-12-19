@@ -3,7 +3,7 @@ const app = express()
 const port = process.env.PORT|| 3000;
 require('dotenv').config()
 let cors = require('cors')
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 app.use(cors())
 app.use(express.json())
 
@@ -21,8 +21,81 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
 
+    const alluserCollection = client.db("Eduhub").collection("Users");
+    const allCourseCollection = client.db("Eduhub").collection("Courses");
 
-    
+app.post('/alluser' , async (req, res)=>{
+let user=req.body;
+let query={email: user.email}
+let Existsuser= await alluserCollection.findOne(query);
+if (Existsuser) {
+  return res.send({message:'already exist'})
+}
+const result = await alluserCollection.insertOne(user);
+res.send(result);
+
+})
+
+app.get('/alluser' ,async (req,res)=>{
+
+    const users= await alluserCollection.find().toArray()
+    res.send(users)
+
+})
+app.get('/alluser/:email' ,async (req,res)=>{
+ let singleuser= req.params.email
+ let query = {email : singleuser}
+    const users= await alluserCollection.findOne(query)
+    res.send(users)
+
+})
+app.post('/course' ,async (req,res)=>{
+ let courses= req.body
+ let result=await allCourseCollection.insertOne(courses)
+ res.send(result)
+   
+})
+app.get('/course' ,async (req,res)=>{
+ let courses= req.body
+ let result=await allCourseCollection.find(courses).toArray()
+ res.send(result)
+   
+})
+app.put('/course/:id' ,async (req,res)=>{
+  const courseId = req.params.id;
+ let courses= req.body
+ let id = req.params.id
+ 
+ const isUserEnrolled = await allCourseCollection.findOne({
+  _id: new ObjectId(courseId),
+  'enrolledStudent.id': courses.id,
+  
+});
+
+if (isUserEnrolled) {
+  return res.status(400).json({ message: 'You already enrolled in the course' });
+}
+ const filter ={ _id : new ObjectId(id) }
+ const options = { upsert: true };
+ const updateDoc = {
+  $push: { enrolledStudent: { id: courses.id, email:courses.email } }
+  
+};
+let result = await allCourseCollection.updateOne(filter, updateDoc, options);
+ res.send(result)
+   
+})
+app.get('/course/:id' ,async (req,res)=>{
+
+ let id = req.params.id
+ const filter ={ _id : new ObjectId(id) }
+ 
+let result = await allCourseCollection.findOne(filter);
+ res.send(result)
+   
+})
+
+
 
 
 
