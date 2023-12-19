@@ -23,6 +23,7 @@ async function run() {
 
     const alluserCollection = client.db("Eduhub").collection("Users");
     const allCourseCollection = client.db("Eduhub").collection("Courses");
+    const allCartCourse = client.db("Eduhub").collection("CartCourse");
 
 app.post('/alluser' , async (req, res)=>{
 let user=req.body;
@@ -85,6 +86,9 @@ let result = await allCourseCollection.updateOne(filter, updateDoc, options);
  res.send(result)
    
 })
+
+
+
 app.get('/course/:id' ,async (req,res)=>{
 
  let id = req.params.id
@@ -97,7 +101,31 @@ let result = await allCourseCollection.findOne(filter);
 
 
 
+app.post('/cart', async (req ,res) =>{
 
+  let cartitem= req.body;
+
+  const existingCartItem = await allCartCourse.findOne({
+    userId: cartitem.userId,
+    _id: new ObjectId(cartitem._id) ,
+  });
+  if (existingCartItem) {
+   
+    return res.status(400).json({ message: 'course is already in the cart' });
+  }
+  let result=await allCartCourse.insertOne(cartitem)
+  res.send(result)
+
+
+})
+app.get('/cart', async (req ,res) =>{
+
+  let cartitem= req.body;
+  let result=await allCartCourse.find(cartitem).toArray()
+  res.send(result)
+
+
+})
 
 
     await client.connect();
