@@ -50,6 +50,14 @@ async function run() {
       res.send(users)
 
     })
+    app.get('/alluser/admin/:email', async (req, res) => {
+      let singleuser = req.params.email
+      let query = { email: singleuser }
+      const users = await alluserCollection.findOne(query)
+      let result = {admin : users.role === 'admin'}
+      res.send(result)
+
+    })
     app.post('/course', async (req, res) => {
       let courses = req.body
       let result = await allCourseCollection.insertOne(courses)
@@ -118,6 +126,7 @@ async function run() {
 
 
     })
+
     app.get('/cart', async (req, res) => {
 
       let cartitem = req.query.email;
