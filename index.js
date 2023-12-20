@@ -1,6 +1,6 @@
 const express = require('express')
 const app = express()
-const port = process.env.PORT|| 3000;
+const port = process.env.PORT || 3000;
 require('dotenv').config()
 let cors = require('cors')
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
@@ -25,122 +25,124 @@ async function run() {
     const allCourseCollection = client.db("Eduhub").collection("Courses");
     const allCartCourse = client.db("Eduhub").collection("CartCourse");
 
-app.post('/alluser' , async (req, res)=>{
-let user=req.body;
-let query={email: user.email}
-let Existsuser= await alluserCollection.findOne(query);
-if (Existsuser) {
-  return res.send({message:'already exist'})
-}
-const result = await alluserCollection.insertOne(user);
-res.send(result);
+    app.post('/alluser', async (req, res) => {
+      let user = req.body;
+      let query = { email: user.email }
+      let Existsuser = await alluserCollection.findOne(query);
+      if (Existsuser) {
+        return res.send({ message: 'already exist' })
+      }
+      const result = await alluserCollection.insertOne(user);
+      res.send(result);
 
-})
+    })
 
-app.get('/alluser' ,async (req,res)=>{
+    app.get('/alluser', async (req, res) => {
 
-    const users= await alluserCollection.find().toArray()
-    res.send(users)
+      const users = await alluserCollection.find().toArray()
+      res.send(users)
 
-})
-app.get('/alluser/:email' ,async (req,res)=>{
- let singleuser= req.params.email
- let query = {email : singleuser}
-    const users= await alluserCollection.findOne(query)
-    res.send(users)
+    })
+    app.get('/alluser/:email', async (req, res) => {
+      let singleuser = req.params.email
+      let query = { email: singleuser }
+      const users = await alluserCollection.findOne(query)
+      res.send(users)
 
-})
-app.post('/course' ,async (req,res)=>{
- let courses= req.body
- let result=await allCourseCollection.insertOne(courses)
- res.send(result)
-   
-})
-app.get('/course' ,async (req,res)=>{
- let courses= req.body
- let result=await allCourseCollection.find(courses).toArray()
- res.send(result)
-   
-})
-app.put('/course/:id' ,async (req,res)=>{
-  const courseId = req.params.id;
- let courses= req.body
- let id = req.params.id
- 
- const isUserEnrolled = await allCourseCollection.findOne({
-  _id: new ObjectId(courseId),
-  'enrolledStudent.id': courses.id,
-  
-});
+    })
+    app.post('/course', async (req, res) => {
+      let courses = req.body
+      let result = await allCourseCollection.insertOne(courses)
+      res.send(result)
 
-if (isUserEnrolled) {
-  return res.status(400).json({ message: 'You already enrolled in the course' });
-}
- const filter ={ _id : new ObjectId(id) }
- const options = { upsert: true };
- const updateDoc = {
-  $push: { enrolledStudent: { id: courses.id, email:courses.email } }
-  
-};
-let result = await allCourseCollection.updateOne(filter, updateDoc, options);
- res.send(result)
-   
-})
+    })
+    app.get('/course', async (req, res) => {
+      let courses = req.body
+      let result = await allCourseCollection.find(courses).toArray()
+      res.send(result)
+
+    })
+    app.put('/course/:id', async (req, res) => {
+      const courseId = req.params.id;
+      let courses = req.body
 
 
+      const isUserEnrolled = await allCourseCollection.findOne({
+        _id: new ObjectId(courseId),
+        'enrolledStudent.id': courses.id,
 
-app.get('/course/:id' ,async (req,res)=>{
+      });
 
- let id = req.params.id
- const filter ={ _id : new ObjectId(id) }
- 
-let result = await allCourseCollection.findOne(filter);
- res.send(result)
-   
-})
+      if (isUserEnrolled) {
+        return res.status(400).json({ message: 'You already enrolled in the course' });
+      }
+      const filter = { _id: new ObjectId(courseId) }
+      const options = { upsert: true };
+      const updateDoc = {
+        $push: { enrolledStudent: { id: courses.id, email: courses.email } }
+
+      };
+      let result = await allCourseCollection.updateOne(filter, updateDoc, options);
+      res.send(result)
+
+    })
 
 
 
-app.post('/cart', async (req ,res) =>{
+    app.get('/course/:id', async (req, res) => {
 
-  let cartitem= req.body;
+      let id = req.params.id
+      const filter = { _id: new ObjectId(id) }
 
-  const existingCartItem = await allCartCourse.findOne({
-    userId: cartitem.userId,
-    _id: new ObjectId(cartitem._id) ,
-  });
-  if (existingCartItem) {
-   
-    return res.status(400).json({ message: 'course is already in the cart' });
-  }
-  let result=await allCartCourse.insertOne(cartitem)
-  res.send(result)
+      let result = await allCourseCollection.findOne(filter);
+      res.send(result)
+
+    })
 
 
-})
-app.get('/cart', async (req ,res) =>{
 
-  let cartitem= req.body;
-  let result=await allCartCourse.find(cartitem).toArray()
-  res.send(result)
+    app.post('/cart', async (req, res) => {
+
+      let cartitem = req.body;
+      let id = req.params.email
+      const existingCartItem = await allCartCourse.findOne({
+        userId: cartitem.userId,
+        courseId: cartitem.courseId,
+      });
+      if (existingCartItem) {
+
+        return res.status(400).json({ message: 'course is already in the cart' });
+      }
+      let result = await allCartCourse.insertOne(cartitem)
+      res.send(result)
 
 
-})
+    })
+    app.get('/cart', async (req, res) => {
+
+      let cartitem = req.query.email;
+      let query = { email: cartitem }
+      let result = await allCartCourse.find(query).toArray()
+      res.send(result)
+
+
+    })
+
 
 
     await client.connect();
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
-    
+
   }
 }
 run().catch(console.dir);
 
 app.get('/', (req, res) => {
-    res.send('Eduhub !')
-  })
-  
-  app.listen(port, () => {
-    console.log(`Example app listening on port ${port}`)
-  })
+  res.send('Eduhub !')
+})
+
+app.listen(port, () => {
+  console.log(`Example app listening on port ${port}`)
+})
