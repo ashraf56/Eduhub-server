@@ -56,7 +56,7 @@ async function run() {
       let singleuser = req.params.email
       let query = { email: singleuser }
       const users = await alluserCollection.findOne(query)
-      let result = {admin : users.role === 'admin'}
+      let result = {admin : users?.role === 'admin'}
       res.send(result)
 
     })
